@@ -13,14 +13,17 @@ export default function InfiniteRunner() {
     const [retryKey, setRetryKey] = useState(0)
 
     useEffect(() => {
+        const width = Math.min(window.innerWidth, 1000)
+        const height = Math.min(window.innerHeight, 500)
+
         const engine = Matter.Engine.create({gravity: {y: 3.5}})
         const runner = Matter.Runner.create()
         const render = Matter.Render.create({
             element: sceneRef.current!,
             engine,
             options: {
-                width: 1000,
-                height: 500,
+                width,
+                height,
                 wireframes: false,
                 background: '#1e293b',
             },
@@ -34,13 +37,13 @@ export default function InfiniteRunner() {
 
         const world = engine.world
 
-        const ground = Matter.Bodies.rectangle(500, 490, 1010, 20, {
+        const ground = Matter.Bodies.rectangle(width / 2, height - 10, width + 10, 20, {
             isStatic: true,
             label: 'ground',
             render: {fillStyle: '#475569'},
         })
 
-        const player = Matter.Bodies.rectangle(100, 420, 40, 40, {
+        const player = Matter.Bodies.rectangle(100, height - 80, 40, 40, {
             label: 'player',
             render: {fillStyle: '#38bdf8'},
         })
@@ -49,14 +52,13 @@ export default function InfiniteRunner() {
 
         const obstacles: Matter.Body[] = []
 
-        // 장애물 생성
         const spawnObstacle = () => {
-            const height = Math.floor(Math.random() * 150) + 50 // 50~200px
-            const y = 500 - 10 - height / 2
-            const obs = Matter.Bodies.rectangle(1050, y, 40, height, {
+            const heightRandom = Math.floor(Math.random() * 150) + 50 // 50~200
+            const y = height - 10 - heightRandom / 2
+            const obs = Matter.Bodies.rectangle(width + 50, y, 40, heightRandom, {
                 isStatic: true,
                 label: 'obstacle',
-                render: { fillStyle: '#f87171' },
+                render: {fillStyle: '#f87171'},
             })
             obstacles.push(obs)
             Matter.World.add(world, obs)
@@ -96,16 +98,16 @@ export default function InfiniteRunner() {
             }
         })
 
-        // 점프
         const jump = () => {
-            if (player.position.y > 400 && !gameOver) {
-                Matter.Body.setVelocity(player, { x: 0, y: -25 })
+            if (player.position.y > height - 100 && !gameOver) {
+                Matter.Body.setVelocity(player, {x: 0, y: -25})
             }
         }
+
+        // Space 키 점프
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') jump()
         })
-        window.addEventListener('mousedown', jump)
 
         return () => {
             Matter.Render.stop(render)
@@ -118,7 +120,6 @@ export default function InfiniteRunner() {
                 render.canvas.parentNode.removeChild(render.canvas)
             }
             window.removeEventListener('keydown', jump)
-            window.removeEventListener('mousedown', jump)
         }
     }, [retryKey])
 
@@ -128,9 +129,23 @@ export default function InfiniteRunner() {
         setRetryKey((prev) => prev + 1)
     }
 
+    const handleJump = () => {
+        const engine = engineRef.current
+        const player = engine?.world.bodies.find((b) => b.label === 'player')
+        const height = Math.min(window.innerHeight, 500)
+        if (player && player.position.y > height - 100 && !gameOver) {
+            Matter.Body.setVelocity(player, {x: 0, y: -25})
+        }
+    }
+
     return (
         <div className="flex flex-col items-center mt-6">
-            <div ref={sceneRef} className="border rounded shadow-lg"/>
+            <div
+                ref={sceneRef}
+                className="w-full max-w-[1000px] aspect-[2/1] border shadow rounded"
+                onClick={() => !gameOver && handleJump()}
+                onTouchStart={() => !gameOver && handleJump()}
+            />
             <div className="mt-4 text-white text-lg">점수: {score}</div>
             {gameOver && (
                 <div className="mt-4 flex flex-col items-center">
