@@ -15,8 +15,9 @@ export default function InfiniteRunner() {
     useEffect(() => {
         const baseWidth = 1000
         const baseHeight = 400
+        const padding = 16
 
-        const actualWidth = Math.min(window.innerWidth, baseWidth)
+        const actualWidth = Math.min(window.innerWidth - padding * 2, baseWidth)
         const actualHeight = Math.min(window.innerHeight, baseHeight)
         const scaleX = actualWidth / baseWidth
         const scaleY = actualHeight / baseHeight
@@ -106,7 +107,7 @@ export default function InfiniteRunner() {
 
         const jump = () => {
             if (player.position.y > actualHeight - 100 * scale && !gameOver) {
-                Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
+                Matter.Body.setVelocity(player, {x: 0, y: -25 / scale})
             }
         }
 
@@ -140,12 +141,12 @@ export default function InfiniteRunner() {
         const height = Math.min(window.innerHeight, 400)
         const scale = height / 400
         if (player && player.position.y > height - 100 * scale && !gameOver) {
-            Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
+            Matter.Body.setVelocity(player, {x: 0, y: -25 / scale})
         }
     }
 
     return (
-        <div className="flex flex-col items-center mt-6">
+        <div className="flex flex-col items-center mt-6 relative">
             <div
                 ref={sceneRef}
                 className="w-full max-w-[1000px] aspect-[5/2] border shadow rounded"
@@ -154,7 +155,8 @@ export default function InfiniteRunner() {
             />
             <div className="mt-4 text-white text-lg">점수: {score}</div>
             {gameOver && (
-                <div className="mt-4 flex flex-col items-center">
+                <div
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center bg-black/70 p-4 rounded-lg">
                     <div className="text-red-500 font-bold text-xl mb-2">💥 Game Over!</div>
                     <Button onClick={handleRetry} variant="outline" className="flex items-center gap-2">
                         <RotateCw className="w-4 h-4"/>
