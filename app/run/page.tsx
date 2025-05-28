@@ -26,8 +26,8 @@ export default function InfiniteRunner() {
         const engine = Matter.Engine.create({gravity: {y: 3}})
         const runner = Matter.Runner.create()
         const render = Matter.Render.create({
-            element: sceneRef.current!,
             engine,
+            canvas: document.createElement('canvas'),
             options: {
                 width: actualWidth,
                 height: actualHeight,
@@ -35,7 +35,7 @@ export default function InfiniteRunner() {
                 background: '#1e293b',
             },
         })
-
+        sceneRef.current?.appendChild(render.canvas)
         engineRef.current = engine
         runnerRef.current = runner
 
