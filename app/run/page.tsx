@@ -13,8 +13,14 @@ export default function InfiniteRunner() {
     const [retryKey, setRetryKey] = useState(0)
 
     useEffect(() => {
-        const width = Math.min(window.innerWidth, 1000)
-        const height = Math.min(window.innerHeight, 500)
+        const baseWidth = 1000
+        const baseHeight = 400
+
+        const actualWidth = Math.min(window.innerWidth, baseWidth)
+        const actualHeight = Math.min(window.innerHeight, baseHeight)
+        const scaleX = actualWidth / baseWidth
+        const scaleY = actualHeight / baseHeight
+        const scale = Math.min(scaleX, scaleY)
 
         const engine = Matter.Engine.create({gravity: {y: 3.5}})
         const runner = Matter.Runner.create()
@@ -22,8 +28,8 @@ export default function InfiniteRunner() {
             element: sceneRef.current!,
             engine,
             options: {
-                width,
-                height,
+                width: actualWidth,
+                height: actualHeight,
                 wireframes: false,
                 background: '#1e293b',
             },
@@ -37,13 +43,13 @@ export default function InfiniteRunner() {
 
         const world = engine.world
 
-        const ground = Matter.Bodies.rectangle(width / 2, height - 10, width + 10, 20, {
+        const ground = Matter.Bodies.rectangle(actualWidth / 2, actualHeight - 10 * scale, actualWidth + 10, 20 * scale, {
             isStatic: true,
             label: 'ground',
             render: {fillStyle: '#475569'},
         })
 
-        const player = Matter.Bodies.rectangle(100, height - 80, 40, 40, {
+        const player = Matter.Bodies.rectangle(100 * scale, actualHeight - 80 * scale, 40 * scale, 40 * scale, {
             label: 'player',
             render: {fillStyle: '#38bdf8'},
         })
@@ -53,9 +59,9 @@ export default function InfiniteRunner() {
         const obstacles: Matter.Body[] = []
 
         const spawnObstacle = () => {
-            const heightRandom = Math.floor(Math.random() * 150) + 50 // 50~200
-            const y = height - 10 - heightRandom / 2
-            const obs = Matter.Bodies.rectangle(width + 50, y, 40, heightRandom, {
+            const heightRandom = (Math.floor(Math.random() * 150) + 50) * scale
+            const y = actualHeight - 10 * scale - heightRandom / 2
+            const obs = Matter.Bodies.rectangle(actualWidth + 50 * scale, y, 40 * scale, heightRandom, {
                 isStatic: true,
                 label: 'obstacle',
                 render: {fillStyle: '#f87171'},
@@ -66,8 +72,8 @@ export default function InfiniteRunner() {
 
         const moveObstacles = () => {
             for (const obs of obstacles) {
-                Matter.Body.translate(obs, {x: -10, y: 0})
-                if (obs.position.x < -50) {
+                Matter.Body.translate(obs, {x: -10 * scale, y: 0})
+                if (obs.position.x < -50 * scale) {
                     Matter.World.remove(world, obs)
                 }
             }
@@ -76,7 +82,7 @@ export default function InfiniteRunner() {
         let spawnTimeoutId: NodeJS.Timeout
         const spawnLoop = () => {
             spawnObstacle()
-            const delay = Math.random() * 500 + 800 // 800~1300ms
+            const delay = Math.random() * 500 + 800
             spawnTimeoutId = setTimeout(spawnLoop, delay)
         }
         spawnLoop()
@@ -99,12 +105,11 @@ export default function InfiniteRunner() {
         })
 
         const jump = () => {
-            if (player.position.y > height - 100 && !gameOver) {
-                Matter.Body.setVelocity(player, {x: 0, y: -25})
+            if (player.position.y > actualHeight - 100 * scale && !gameOver) {
+                Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
             }
         }
 
-        // Space 키 점프
         window.addEventListener('keydown', (e) => {
             if (e.code === 'Space') jump()
         })
@@ -132,9 +137,10 @@ export default function InfiniteRunner() {
     const handleJump = () => {
         const engine = engineRef.current
         const player = engine?.world.bodies.find((b) => b.label === 'player')
-        const height = Math.min(window.innerHeight, 500)
-        if (player && player.position.y > height - 100 && !gameOver) {
-            Matter.Body.setVelocity(player, {x: 0, y: -25})
+        const height = Math.min(window.innerHeight, 400)
+        const scale = height / 400
+        if (player && player.position.y > height - 100 * scale && !gameOver) {
+            Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
         }
     }
 
@@ -142,7 +148,7 @@ export default function InfiniteRunner() {
         <div className="flex flex-col items-center mt-6">
             <div
                 ref={sceneRef}
-                className="w-full max-w-[1000px] aspect-[2/1] border shadow rounded"
+                className="w-full max-w-[1000px] aspect-[5/2] border shadow rounded"
                 onClick={() => !gameOver && handleJump()}
                 onTouchStart={() => !gameOver && handleJump()}
             />
