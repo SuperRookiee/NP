@@ -23,7 +23,7 @@ export default function InfiniteRunner() {
         const scaleY = actualHeight / baseHeight
         const scale = Math.min(scaleX, scaleY)
 
-        const engine = Matter.Engine.create({gravity: {y: 3.5}})
+        const engine = Matter.Engine.create({gravity: {y: 3}})
         const runner = Matter.Runner.create()
         const render = Matter.Render.create({
             element: sceneRef.current!,
@@ -90,7 +90,18 @@ export default function InfiniteRunner() {
 
         const scoreInterval = setInterval(() => setScore((prev) => prev + 1), 300)
 
-        Matter.Events.on(engine, 'beforeUpdate', moveObstacles)
+        Matter.Events.on(engine, 'beforeUpdate', () => {
+            moveObstacles()
+
+            // prevent player from falling below the ground
+            if (player.position.y > actualHeight - 20 * scale) {
+                Matter.Body.setPosition(player, {
+                    x: player.position.x,
+                    y: actualHeight - 20 * scale,
+                })
+                Matter.Body.setVelocity(player, {x: 0, y: 0})
+            }
+        })
 
         Matter.Events.on(engine, 'collisionStart', (e) => {
             if (gameOver) return
@@ -107,7 +118,7 @@ export default function InfiniteRunner() {
 
         const jump = () => {
             if (player.position.y > actualHeight - 100 * scale && !gameOver) {
-                Matter.Body.setVelocity(player, {x: 0, y: -25 / scale})
+                Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
             }
         }
 
@@ -141,7 +152,7 @@ export default function InfiniteRunner() {
         const height = Math.min(window.innerHeight, 400)
         const scale = height / 400
         if (player && player.position.y > height - 100 * scale && !gameOver) {
-            Matter.Body.setVelocity(player, {x: 0, y: -25 / scale})
+            Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
         }
     }
 
@@ -153,7 +164,7 @@ export default function InfiniteRunner() {
                 onClick={() => !gameOver && handleJump()}
                 onTouchStart={() => !gameOver && handleJump()}
             />
-            <div className="mt-4 text-white text-lg">점수: {score}</div>
+            <div className="text-white text-lg">점수: {score}</div>
             {gameOver && (
                 <div
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center bg-black/70 p-4 rounded-lg">
