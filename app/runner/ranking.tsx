@@ -1,36 +1,41 @@
-import {ChevronDown, ChevronUp} from 'lucide-react'
-import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
-import {ScrollArea} from '@/components/ui/scroll-area'
-import {Separator} from '@/components/ui/separator'
+import {Menu} from 'lucide-react'
+import {Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger} from '@/components/ui/drawer'
+import {Button} from "@/components/ui/button";
 
 interface RankingProps {
-    open: boolean
-    setOpen: (open: boolean) => void
-    ranking: { name: string; score: number }[]
+    ranking: { name: string, score: number }[]
 }
 
-export default function Ranking({open, setOpen, ranking}: RankingProps) {
+export default function Ranking({ranking}: RankingProps) {
     return (
-        <Collapsible open={open} onOpenChange={setOpen} className="w-full max-w-[62.5rem] px-4">
-            <div className="flex items-center justify-between mb-2 mt-4">
-                <CollapsibleTrigger className="text-white font-bold text-lg flex items-center gap-2">
-                    🏆 랭킹
-                    {open ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
-                </CollapsibleTrigger>
-            </div>
-            <CollapsibleContent>
-                <Separator className="bg-slate-700 mb-2"/>
-                <ScrollArea className="h-64 rounded-md border border-slate-800">
-                    <ul className="text-sm text-slate-200 space-y-1 p-2">
-                        {ranking.map((r, i) => (
-                            <li key={i}>
-                                {i + 1}. {r.name} - {r.score}점
-                            </li>
-                        ))}
-                    </ul>
-                </ScrollArea>
-                <Separator className="bg-slate-700 mt-2"/>
-            </CollapsibleContent>
-        </Collapsible>
+        <Drawer>
+            <DrawerTrigger asChild>
+                <Button variant="outline" className="text-white flex items-center gap-2">
+                    <Menu className="w-5 h-5"/> 랭킹 보기
+                </Button>
+            </DrawerTrigger>
+            <DrawerContent className="h-2/3">
+                <div className="mx-auto w-full max-w-xl">
+                    <DrawerHeader>
+                        <DrawerTitle className="text-white">🏆 랭킹</DrawerTitle>
+                        <DrawerDescription className="text-slate-400">
+                            상위 기록을 확인해보세요.
+                        </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="p-4 pb-0">
+                        <ul className="text-sm text-slate-200 space-y-1 max-h-60 overflow-y-auto">
+                            {ranking.map((r, i) =>
+                                <li key={i}>{i + 1}. {r.name} - {r.score}점</li>
+                            )}
+                        </ul>
+                    </div>
+                    <DrawerFooter>
+                        <DrawerClose asChild>
+                            <Button variant="outline">닫기</Button>
+                        </DrawerClose>
+                    </DrawerFooter>
+                </div>
+            </DrawerContent>
+        </Drawer>
     )
 }

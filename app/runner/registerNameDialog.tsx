@@ -2,7 +2,7 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle} from '@/components/ui/
 import {Input} from '@/components/ui/input'
 import {Button} from '@/components/ui/button'
 
-interface RegistNameDialogProps {
+interface RegisterNameDialogProps {
     open: boolean
     name: string
     setName: (name: string) => void
@@ -10,7 +10,7 @@ interface RegistNameDialogProps {
     onOpenChange: (open: boolean) => void
 }
 
-export default function RegisterNameDialog({open, name, setName, onSubmit, onOpenChange}: RegistNameDialogProps) {
+export default function RegisterNameDialog({open, name, setName, onSubmit, onOpenChange}: RegisterNameDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="p-6 rounded-xl">

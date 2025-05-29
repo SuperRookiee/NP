@@ -1,5 +1,5 @@
 'use client'
-import {useEffect, useRef, useState, useCallback} from 'react'
+import {useCallback, useEffect, useRef, useState} from 'react'
 import Matter from 'matter-js'
 import {Button} from '@/components/ui/button'
 import Retry from './retry'
@@ -12,6 +12,8 @@ export default function InfiniteRunner() {
     const runnerRef = useRef<Matter.Runner | null>(null)
     const jumpCountRef = useRef<number>(0)
     const scoreRef = useRef(0)
+    const obstaclesRef = useRef<Matter.Body[]>([])
+
     const [score, setScore] = useState(0)
     const [gameOver, setGameOver] = useState(false)
     const [retryKey, setRetryKey] = useState(0)
@@ -20,7 +22,8 @@ export default function InfiniteRunner() {
     const [ranking, setRanking] = useState<{ name: string, score: number }[]>([])
     const [dialogOpen, setDialogOpen] = useState(false)
     const [playerName, setPlayerName] = useState('')
-    const [open, setOpen] = useState(false)
+    const [started, setStarted] = useState(false)
+
     const green = '#86efac'
     const yellow = '#facc15'
     const red = '#f97316'
@@ -34,7 +37,10 @@ export default function InfiniteRunner() {
         setGameOver(false)
         setRetryKey(prev => prev + 1)
         setDifficulty(1)
+        setStarted(false)
         jumpCountRef.current = 0
+        obstaclesRef.current = []
+
         const engine = engineRef.current
         const player = engine?.world.bodies.find(b => b.label === 'player')
         if (player) player.render.fillStyle = green
@@ -42,16 +48,26 @@ export default function InfiniteRunner() {
 
     const handleJump = useCallback(() => {
         const engine = engineRef.current
+        const runner = runnerRef.current
         const player = engine?.world.bodies.find(b => b.label === 'player')
         if (!player || gameOver) return
+
+        if (!started) {
+            setStarted(true)
+            if (engine && runner) {
+                Matter.Runner.run(runner, engine)
+                spawnLoop()
+                startIntervals()
+            }
+        }
+
         if (jumpCountRef.current < 2) {
             Matter.Body.setVelocity(player, {x: 0, y: -25})
             jumpCountRef.current++
             const remaining = 2 - jumpCountRef.current
-            const color = remaining === 2 ? green : remaining === 1 ? yellow : red
-            player.render.fillStyle = color
+            player.render.fillStyle = remaining === 2 ? green : remaining === 1 ? yellow : red
         }
-    }, [gameOver])
+    }, [gameOver, started])
 
     const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (e.code === 'Space') handleJump()
@@ -73,6 +89,36 @@ export default function InfiniteRunner() {
             .catch(err => console.error('Failed to load ranking', err))
     }, [retryKey])
 
+    let spawnTimeoutId: NodeJS.Timeout
+    let scoreIntervalId: NodeJS.Timeout
+    let difficultyIntervalId: NodeJS.Timeout
+
+    const spawnObstacle = () => {
+        const engine = engineRef.current
+        if (!engine) return
+
+        const heightRandom = Math.floor(Math.random() * 150) + 50 + difficulty * 10
+        const y = 600 - 20 - heightRandom / 2
+        const obs = Matter.Bodies.rectangle(1000 + 50, y, 40, heightRandom, {
+            isStatic: true,
+            label: 'obstacle',
+            render: {fillStyle: '#ef4444'},
+        })
+        obstaclesRef.current.push(obs)
+        Matter.World.add(engine.world, obs)
+    }
+
+    const spawnLoop = () => {
+        spawnObstacle()
+        const delay = Math.random() * 500 + 800
+        spawnTimeoutId = setTimeout(spawnLoop, delay)
+    }
+
+    const startIntervals = () => {
+        scoreIntervalId = setInterval(() => setScore(prev => prev + difficulty), 300)
+        difficultyIntervalId = setInterval(() => setDifficulty(prev => prev + 1), 10000)
+    }
+
     useEffect(() => {
         const baseWidth = 1000
         const baseHeight = 600
@@ -90,11 +136,9 @@ export default function InfiniteRunner() {
         })
         render.canvas.className = 'w-full h-auto block rounded-xl'
         sceneRef.current?.appendChild(render.canvas)
+
         engineRef.current = engine
         runnerRef.current = runner
-
-        Matter.Runner.run(runner, engine)
-        Matter.Render.run(render)
 
         const world = engine.world
         const ground = Matter.Bodies.rectangle(baseWidth / 2, baseHeight - 10, baseWidth + 10, 20, {
@@ -107,37 +151,15 @@ export default function InfiniteRunner() {
             render: {fillStyle: green},
         })
         Matter.World.add(world, [ground, player])
-        const obstacles: Matter.Body[] = []
-
-        const spawnObstacle = () => {
-            const heightRandom = Math.floor(Math.random() * 150) + 50 + difficulty * 10
-            const y = baseHeight - 20 - heightRandom / 2
-            const obs = Matter.Bodies.rectangle(baseWidth + 50, y, 40, heightRandom, {
-                isStatic: true,
-                label: 'obstacle',
-                render: {fillStyle: '#ef4444'},
-            })
-            obstacles.push(obs)
-            Matter.World.add(world, obs)
-        }
 
         const moveObstacles = () => {
-            for (const obs of obstacles) {
+            for (const obs of obstaclesRef.current) {
                 Matter.Body.translate(obs, {x: -(10 + difficulty), y: 0})
-                if (obs.position.x < -50) Matter.World.remove(world, obs)
+                if (obs.position.x < -50) {
+                    Matter.World.remove(engine.world, obs)
+                }
             }
         }
-
-        let spawnTimeoutId: NodeJS.Timeout
-        const spawnLoop = () => {
-            spawnObstacle()
-            const delay = Math.random() * 500 + 800
-            spawnTimeoutId = setTimeout(spawnLoop, delay)
-        }
-        spawnLoop()
-
-        const scoreInterval = setInterval(() => setScore(prev => prev + difficulty), 300)
-        const difficultyInterval = setInterval(() => setDifficulty(prev => prev + 1), 10000)
 
         Matter.Events.on(engine, 'beforeUpdate', () => {
             moveObstacles()
@@ -160,17 +182,18 @@ export default function InfiniteRunner() {
                     setGameOver(true)
                     Matter.Runner.stop(runner)
                     clearTimeout(spawnTimeoutId)
-                    clearInterval(scoreInterval)
-                    clearInterval(difficultyInterval)
+                    clearInterval(scoreIntervalId)
+                    clearInterval(difficultyIntervalId)
                 }
                 if (labels.includes('player') && labels.includes('ground')) {
                     jumpCountRef.current = 0
-                    const engine = engineRef.current
                     const player = engine?.world.bodies.find(b => b.label === 'player')
                     if (player) player.render.fillStyle = green
                 }
             }
         })
+
+        Matter.Render.run(render)
 
         return () => {
             Matter.Render.stop(render)
@@ -178,8 +201,8 @@ export default function InfiniteRunner() {
             Matter.Engine.clear(engine)
             Matter.Runner.stop(runner)
             clearTimeout(spawnTimeoutId)
-            clearInterval(scoreInterval)
-            clearInterval(difficultyInterval)
+            clearInterval(scoreIntervalId)
+            clearInterval(difficultyIntervalId)
             if (render.canvas.parentNode) render.canvas.parentNode.removeChild(render.canvas)
         }
     }, [retryKey])
@@ -208,7 +231,7 @@ export default function InfiniteRunner() {
                 onClick={() => !gameOver && handleJump()}
             />
             <div className="text-lg font-semibold text-white tracking-widest">점수: {score}</div>
-            <Ranking open={open} setOpen={setOpen} ranking={ranking}/>
+            <Ranking ranking={ranking}/>
             {isMobile && !gameOver && (
                 <Button
                     onClick={handleJump}
