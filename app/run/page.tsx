@@ -11,17 +11,26 @@ export default function InfiniteRunner() {
     const [score, setScore] = useState(0)
     const [gameOver, setGameOver] = useState(false)
     const [retryKey, setRetryKey] = useState(0)
+    const [difficulty, setDifficulty] = useState(1)
+
+    const handleRetry = () => {
+        setScore(0)
+        setGameOver(false)
+        setRetryKey(prev => prev + 1)
+        setDifficulty(1)
+    }
+
+    const handleJump = () => {
+        const engine = engineRef.current
+        const player = engine?.world.bodies.find(b => b.label === 'player')
+        if (player && player.position.y >= 500 && !gameOver) {
+            Matter.Body.setVelocity(player, {x: 0, y: -25})
+        }
+    }
 
     useEffect(() => {
         const baseWidth = 1000
-        const baseHeight = 400
-        const padding = 16
-
-        const actualWidth = Math.min(window.innerWidth - padding * 2, baseWidth)
-        const actualHeight = Math.min(window.innerHeight, baseHeight)
-        const scaleX = actualWidth / baseWidth
-        const scaleY = actualHeight / baseHeight
-        const scale = Math.min(scaleX, scaleY)
+        const baseHeight = 600
 
         const engine = Matter.Engine.create({gravity: {y: 3}})
         const runner = Matter.Runner.create()
@@ -29,12 +38,13 @@ export default function InfiniteRunner() {
             engine,
             canvas: document.createElement('canvas'),
             options: {
-                width: actualWidth,
-                height: actualHeight,
+                width: baseWidth,
+                height: baseHeight,
                 wireframes: false,
                 background: '#1e293b',
             },
         })
+        render.canvas.className = 'w-full h-auto block'
         sceneRef.current?.appendChild(render.canvas)
         engineRef.current = engine
         runnerRef.current = runner
@@ -44,25 +54,24 @@ export default function InfiniteRunner() {
 
         const world = engine.world
 
-        const ground = Matter.Bodies.rectangle(actualWidth / 2, actualHeight - 10 * scale, actualWidth + 10, 20 * scale, {
+        const ground = Matter.Bodies.rectangle(baseWidth / 2, baseHeight - 10, baseWidth + 10, 20, {
             isStatic: true,
             label: 'ground',
             render: {fillStyle: '#475569'},
         })
 
-        const player = Matter.Bodies.rectangle(100 * scale, actualHeight - 80 * scale, 40 * scale, 40 * scale, {
+        const player = Matter.Bodies.rectangle(100, baseHeight - 80, 40, 40, {
             label: 'player',
             render: {fillStyle: '#38bdf8'},
         })
 
         Matter.World.add(world, [ground, player])
-
         const obstacles: Matter.Body[] = []
 
         const spawnObstacle = () => {
-            const heightRandom = (Math.floor(Math.random() * 150) + 50) * scale
-            const y = actualHeight - 10 * scale - heightRandom / 2
-            const obs = Matter.Bodies.rectangle(actualWidth + 50 * scale, y, 40 * scale, heightRandom, {
+            const heightRandom = (Math.floor(Math.random() * 150) + 50 + difficulty * 10)
+            const y = baseHeight - 20 - heightRandom / 2
+            const obs = Matter.Bodies.rectangle(baseWidth + 50, y, 40, heightRandom, {
                 isStatic: true,
                 label: 'obstacle',
                 render: {fillStyle: '#f87171'},
@@ -73,8 +82,8 @@ export default function InfiniteRunner() {
 
         const moveObstacles = () => {
             for (const obs of obstacles) {
-                Matter.Body.translate(obs, {x: -10 * scale, y: 0})
-                if (obs.position.x < -50 * scale) {
+                Matter.Body.translate(obs, {x: -(10 + difficulty), y: 0})
+                if (obs.position.x < -50) {
                     Matter.World.remove(world, obs)
                 }
             }
@@ -88,16 +97,16 @@ export default function InfiniteRunner() {
         }
         spawnLoop()
 
-        const scoreInterval = setInterval(() => setScore((prev) => prev + 1), 300)
+        const scoreInterval = setInterval(() => setScore(prev => prev + difficulty), 300)
+        const difficultyInterval = setInterval(() => setDifficulty(prev => prev + 1), 10000)
 
         Matter.Events.on(engine, 'beforeUpdate', () => {
             moveObstacles()
 
-            // prevent player from falling below the ground
-            if (player.position.y > actualHeight - 20 * scale) {
+            if (player.position.y >= baseHeight - 20) {
                 Matter.Body.setPosition(player, {
                     x: player.position.x,
-                    y: actualHeight - 20 * scale,
+                    y: baseHeight - 20,
                 })
                 Matter.Body.setVelocity(player, {x: 0, y: 0})
             }
@@ -112,13 +121,15 @@ export default function InfiniteRunner() {
                     Matter.Runner.stop(runner)
                     clearTimeout(spawnTimeoutId)
                     clearInterval(scoreInterval)
+                    clearInterval(difficultyInterval)
                 }
             }
         })
 
         const jump = () => {
-            if (player.position.y > actualHeight - 100 * scale && !gameOver) {
-                Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
+            if (gameOver) return
+            if (player.position.y >= baseHeight - 100) {
+                Matter.Body.setVelocity(player, {x: 0, y: -25})
             }
         }
 
@@ -133,6 +144,7 @@ export default function InfiniteRunner() {
             Matter.Runner.stop(runner)
             clearTimeout(spawnTimeoutId)
             clearInterval(scoreInterval)
+            clearInterval(difficultyInterval)
             if (render.canvas.parentNode) {
                 render.canvas.parentNode.removeChild(render.canvas)
             }
@@ -140,36 +152,21 @@ export default function InfiniteRunner() {
         }
     }, [retryKey])
 
-    const handleRetry = () => {
-        setScore(0)
-        setGameOver(false)
-        setRetryKey((prev) => prev + 1)
-    }
-
-    const handleJump = () => {
-        const engine = engineRef.current
-        const player = engine?.world.bodies.find((b) => b.label === 'player')
-        const height = Math.min(window.innerHeight, 400)
-        const scale = height / 400
-        if (player && player.position.y > height - 100 * scale && !gameOver) {
-            Matter.Body.setVelocity(player, {x: 0, y: -25 * scale})
-        }
-    }
-
     return (
-        <div className="flex flex-col items-center mt-6 relative">
+        <div className="flex flex-col items-center gap-4 mt-6 relative">
             <div
                 ref={sceneRef}
-                className="w-full max-w-[1000px] aspect-[5/2] border shadow rounded"
+                className="relative w-full max-w-[62.5rem] aspect-[5/3] rounded-xl border bg-muted shadow-lg"
                 onClick={() => !gameOver && handleJump()}
                 onTouchStart={() => !gameOver && handleJump()}
             />
-            <div className="text-white text-lg">점수: {score}</div>
+            <div className="text-lg font-medium text-white">점수: {score}</div>
+
             {gameOver && (
                 <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center bg-black/70 p-4 rounded-lg">
-                    <div className="text-red-500 font-bold text-xl mb-2">💥 Game Over!</div>
-                    <Button onClick={handleRetry} variant="outline" className="flex items-center gap-2">
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background/90 p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3">
+                    <div className="text-xl font-bold text-destructive">💥 Game Over!</div>
+                    <Button variant="outline" onClick={handleRetry} className="gap-2">
                         <RotateCw className="w-4 h-4"/>
                         Retry
                     </Button>
