@@ -14,11 +14,9 @@ export default function InfiniteRunner() {
     const scoreRef = useRef(0)
     const obstaclesRef = useRef<Matter.Body[]>([])
     const gameOverRef = useRef(false)
-
     const scoreIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const difficultyIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const spawnTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
     const [score, setScore] = useState(0)
     const [gameOver, setGameOver] = useState(false)
     const [retryKey, setRetryKey] = useState(0)
@@ -28,7 +26,6 @@ export default function InfiniteRunner() {
     const [dialogOpen, setDialogOpen] = useState(false)
     const [playerName, setPlayerName] = useState('')
     const [started, setStarted] = useState(false)
-
     const green = '#86efac'
     const yellow = '#facc15'
     const red = '#f97316'
@@ -47,10 +44,10 @@ export default function InfiniteRunner() {
         clearIntervals()
         setScore(0)
         setGameOver(false)
-        gameOverRef.current = false
         setRetryKey(prev => prev + 1)
         setDifficulty(1)
         setStarted(false)
+        gameOverRef.current = false
         jumpCountRef.current = 0
         obstaclesRef.current = []
 
@@ -134,7 +131,7 @@ export default function InfiniteRunner() {
 
         difficultyIntervalRef.current = setInterval(() => {
             if (!gameOverRef.current) setDifficulty(prev => prev + 1)
-        }, 10000)
+        }, 5000)
     }
 
     useEffect(() => {
