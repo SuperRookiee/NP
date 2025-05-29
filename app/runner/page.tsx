@@ -237,7 +237,7 @@ export default function InfiniteRunner() {
     }
 
     return (
-        <div className="flex flex-col items-center gap-6 mt-10 relative">
+        <div className="flex flex-col items-center gap-4 relative">
             <div
                 ref={sceneRef}
                 className="relative w-full max-w-[62.5rem] aspect-[5/3] border-2 border-slate-600 bg-slate-800 shadow-2xl rounded-2xl overflow-hidden"
