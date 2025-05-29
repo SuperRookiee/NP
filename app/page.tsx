@@ -2,6 +2,7 @@
 import Link from 'next/link'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import Header from "@/app/_components/Header";
 
 export default function Home() {
     const navItems = [
@@ -14,23 +15,27 @@ export default function Home() {
     ]
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>🧪 Laboratory Home</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-                {navItems.map((item) =>
-                    item.enabled ? (
-                        <Button asChild key={item.href} className={`${item.className} text-white`}>
-                            <Link href={item.href}>{item.label}</Link>
-                        </Button>
-                    ) : (
-                        <Button key={item.href} disabled variant="secondary" className={`${item.className} text-white`}>
-                            {item.label}
-                        </Button>
-                    )
-                )}
-            </CardContent>
-        </Card>
+        <>
+            <Header/>
+            <Card>
+                <CardHeader>
+                    <CardTitle>🧪 Laboratory Home</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-3 px-12">
+                    {navItems.map(item =>
+                        item.enabled ? (
+                            <Button asChild key={item.href} className={`${item.className} text-white`}>
+                                <Link href={item.href}>{item.label}</Link>
+                            </Button>
+                        ) : (
+                            <Button key={item.href} disabled variant="secondary"
+                                    className={`${item.className} text-white`}>
+                                {item.label}
+                            </Button>
+                        )
+                    )}
+                </CardContent>
+            </Card>
+        </>
     )
 }

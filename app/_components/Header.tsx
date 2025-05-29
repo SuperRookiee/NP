@@ -13,6 +13,7 @@ export default function Header() {
         memo: '📝',
         weather: '🌤️',
         summarize: '📄',
+        runner: '🎮',
         default: '📁',
     }
 

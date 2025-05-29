@@ -1,6 +1,6 @@
 import {ReactNode} from "react";
-import SubPageLayout from '@/app/_layouts/SubPageLayout'
+import CategoryLayout from '@/app/_layouts/CategoryLayout'
 
 export default function Layout({children}: { children: ReactNode }) {
-    return <SubPageLayout>{children}</SubPageLayout>
+    return <CategoryLayout>{children}</CategoryLayout>
 }
