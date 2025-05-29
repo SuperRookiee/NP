@@ -3,7 +3,7 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 import Matter from 'matter-js'
 import {Button} from '@/components/ui/button'
 import Retry from './retry'
-import RegisterNameDialog from './registerNameDialog'
+import RegisterDialog from './registerDialog'
 import Ranking from './ranking'
 
 export default function InfiniteRunner() {
@@ -13,6 +13,11 @@ export default function InfiniteRunner() {
     const jumpCountRef = useRef<number>(0)
     const scoreRef = useRef(0)
     const obstaclesRef = useRef<Matter.Body[]>([])
+    const gameOverRef = useRef(false)
+
+    const scoreIntervalRef = useRef<NodeJS.Timeout | null>(null)
+    const difficultyIntervalRef = useRef<NodeJS.Timeout | null>(null)
+    const spawnTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
     const [score, setScore] = useState(0)
     const [gameOver, setGameOver] = useState(false)
@@ -32,9 +37,17 @@ export default function InfiniteRunner() {
         scoreRef.current = score
     }, [score])
 
+    const clearIntervals = () => {
+        if (scoreIntervalRef.current) clearInterval(scoreIntervalRef.current)
+        if (difficultyIntervalRef.current) clearInterval(difficultyIntervalRef.current)
+        if (spawnTimeoutRef.current) clearTimeout(spawnTimeoutRef.current)
+    }
+
     const handleRetry = () => {
+        clearIntervals()
         setScore(0)
         setGameOver(false)
+        gameOverRef.current = false
         setRetryKey(prev => prev + 1)
         setDifficulty(1)
         setStarted(false)
@@ -89,10 +102,6 @@ export default function InfiniteRunner() {
             .catch(err => console.error('Failed to load ranking', err))
     }, [retryKey])
 
-    let spawnTimeoutId: NodeJS.Timeout
-    let scoreIntervalId: NodeJS.Timeout
-    let difficultyIntervalId: NodeJS.Timeout
-
     const spawnObstacle = () => {
         const engine = engineRef.current
         if (!engine) return
@@ -110,13 +119,22 @@ export default function InfiniteRunner() {
 
     const spawnLoop = () => {
         spawnObstacle()
-        const delay = Math.random() * 500 + 800
-        spawnTimeoutId = setTimeout(spawnLoop, delay)
+
+        const level = Math.floor(difficulty / 10)
+        const minDelay = Math.max(300, 800 - level * 100)
+        const maxDelay = Math.max(minDelay + 200, 600)
+        const delay = Math.random() * (maxDelay - minDelay) + minDelay
+        spawnTimeoutRef.current = setTimeout(spawnLoop, delay)
     }
 
     const startIntervals = () => {
-        scoreIntervalId = setInterval(() => setScore(prev => prev + difficulty), 300)
-        difficultyIntervalId = setInterval(() => setDifficulty(prev => prev + 1), 10000)
+        scoreIntervalRef.current = setInterval(() => {
+            if (!gameOverRef.current) setScore(prev => prev + difficulty)
+        }, 300)
+
+        difficultyIntervalRef.current = setInterval(() => {
+            if (!gameOverRef.current) setDifficulty(prev => prev + 1)
+        }, 10000)
     }
 
     useEffect(() => {
@@ -174,16 +192,16 @@ export default function InfiniteRunner() {
         })
 
         Matter.Events.on(engine, 'collisionStart', e => {
-            if (gameOver) return
+            if (gameOverRef.current) return
+
             for (const pair of e.pairs) {
                 const labels = [pair.bodyA.label, pair.bodyB.label]
                 if (labels.includes('player') && labels.includes('obstacle')) {
                     setDialogOpen(true)
                     setGameOver(true)
+                    gameOverRef.current = true
                     Matter.Runner.stop(runner)
-                    clearTimeout(spawnTimeoutId)
-                    clearInterval(scoreIntervalId)
-                    clearInterval(difficultyIntervalId)
+                    clearIntervals()
                 }
                 if (labels.includes('player') && labels.includes('ground')) {
                     jumpCountRef.current = 0
@@ -200,9 +218,7 @@ export default function InfiniteRunner() {
             Matter.World.clear(world, false)
             Matter.Engine.clear(engine)
             Matter.Runner.stop(runner)
-            clearTimeout(spawnTimeoutId)
-            clearInterval(scoreIntervalId)
-            clearInterval(difficultyIntervalId)
+            clearIntervals()
             if (render.canvas.parentNode) render.canvas.parentNode.removeChild(render.canvas)
         }
     }, [retryKey])
@@ -240,12 +256,17 @@ export default function InfiniteRunner() {
                     점프!
                 </Button>
             )}
-            <RegisterNameDialog
+            <RegisterDialog
                 open={dialogOpen}
                 name={playerName}
                 setName={setPlayerName}
                 onSubmit={handleSubmitScore}
                 onOpenChange={setDialogOpen}
+                onSkip={() => {
+                    setDialogOpen(false)
+                    setPlayerName('')
+                    handleRetry()
+                }}
             />
             {gameOver && <Retry onRetry={handleRetry}/>}
         </div>

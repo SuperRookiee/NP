@@ -10,23 +10,25 @@ export default function Ranking({ranking}: RankingProps) {
     return (
         <Drawer>
             <DrawerTrigger asChild>
-                <Button variant="outline" className="text-white flex items-center gap-2">
+                <Button variant="outline" className="text-black dark:text-white flex items-center gap-2">
                     <Menu className="w-5 h-5"/> 랭킹 보기
                 </Button>
             </DrawerTrigger>
             <DrawerContent className="h-2/3">
                 <div className="mx-auto w-full max-w-xl">
                     <DrawerHeader>
-                        <DrawerTitle className="text-white">🏆 랭킹</DrawerTitle>
-                        <DrawerDescription className="text-slate-400">
+                        <DrawerTitle className="text-black dark:text-white">🏆 랭킹</DrawerTitle>
+                        <DrawerDescription className="text-slate-600 dark:text-slate-400">
                             상위 기록을 확인해보세요.
                         </DrawerDescription>
                     </DrawerHeader>
                     <div className="p-4 pb-0">
-                        <ul className="text-sm text-slate-200 space-y-1 max-h-60 overflow-y-auto">
-                            {ranking.map((r, i) =>
-                                <li key={i}>{i + 1}. {r.name} - {r.score}점</li>
-                            )}
+                        <ul className="text-sm text-slate-800 dark:text-slate-200 space-y-1 max-h-60 overflow-y-auto">
+                            {ranking.map((r, i) => (
+                                <li key={i}>
+                                    {i + 1}. {r.name} - {r.score}점
+                                </li>
+                            ))}
                         </ul>
                     </div>
                     <DrawerFooter>
