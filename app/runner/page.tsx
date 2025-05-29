@@ -1,13 +1,15 @@
 'use client'
-import {useEffect, useRef, useState} from 'react'
+import {useEffect, useRef, useState, useCallback} from 'react'
 import Matter from 'matter-js'
-import {Button} from '@/components/ui/button'
 import {RotateCw} from 'lucide-react'
+import {Card, CardContent, CardTitle} from "@/components/ui/card";
+import {Button} from '@/components/ui/button'
 
 export default function InfiniteRunner() {
     const sceneRef = useRef<HTMLDivElement>(null)
     const engineRef = useRef<Matter.Engine | null>(null)
     const runnerRef = useRef<Matter.Runner | null>(null)
+    const jumpCountRef = useRef<number>(0)
     const [score, setScore] = useState(0)
     const [gameOver, setGameOver] = useState(false)
     const [retryKey, setRetryKey] = useState(0)
@@ -18,20 +20,32 @@ export default function InfiniteRunner() {
         setGameOver(false)
         setRetryKey(prev => prev + 1)
         setDifficulty(1)
+        jumpCountRef.current = 0
     }
 
-    const handleJump = () => {
+    const handleJump = useCallback(() => {
         const engine = engineRef.current
         const player = engine?.world.bodies.find(b => b.label === 'player')
-        if (player && player.position.y >= 500 && !gameOver) {
+        if (!player || gameOver) return
+
+        if (jumpCountRef.current < 2) {
             Matter.Body.setVelocity(player, {x: 0, y: -25})
+            jumpCountRef.current++
         }
-    }
+    }, [gameOver])
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        if (e.code === 'Space') handleJump()
+    }, [handleJump])
+
+    useEffect(() => {
+        window.addEventListener('keydown', handleKeyDown)
+        return () => window.removeEventListener('keydown', handleKeyDown)
+    }, [handleKeyDown])
 
     useEffect(() => {
         const baseWidth = 1000
         const baseHeight = 600
-
         const engine = Matter.Engine.create({gravity: {y: 3}})
         const runner = Matter.Runner.create()
         const render = Matter.Render.create({
@@ -55,14 +69,11 @@ export default function InfiniteRunner() {
         const world = engine.world
 
         const ground = Matter.Bodies.rectangle(baseWidth / 2, baseHeight - 10, baseWidth + 10, 20, {
-            isStatic: true,
-            label: 'ground',
-            render: {fillStyle: '#475569'},
+            isStatic: true, label: 'ground', render: {fillStyle: '#475569'}
         })
 
         const player = Matter.Bodies.rectangle(100, baseHeight - 80, 40, 40, {
-            label: 'player',
-            render: {fillStyle: '#38bdf8'},
+            label: 'player', render: {fillStyle: '#38bdf8'}
         })
 
         Matter.World.add(world, [ground, player])
@@ -72,9 +83,7 @@ export default function InfiniteRunner() {
             const heightRandom = (Math.floor(Math.random() * 150) + 50 + difficulty * 10)
             const y = baseHeight - 20 - heightRandom / 2
             const obs = Matter.Bodies.rectangle(baseWidth + 50, y, 40, heightRandom, {
-                isStatic: true,
-                label: 'obstacle',
-                render: {fillStyle: '#f87171'},
+                isStatic: true, label: 'obstacle', render: {fillStyle: '#f87171'}
             })
             obstacles.push(obs)
             Matter.World.add(world, obs)
@@ -83,9 +92,8 @@ export default function InfiniteRunner() {
         const moveObstacles = () => {
             for (const obs of obstacles) {
                 Matter.Body.translate(obs, {x: -(10 + difficulty), y: 0})
-                if (obs.position.x < -50) {
+                if (obs.position.x < -50)
                     Matter.World.remove(world, obs)
-                }
             }
         }
 
@@ -98,21 +106,10 @@ export default function InfiniteRunner() {
         spawnLoop()
 
         const scoreInterval = setInterval(() => setScore(prev => prev + difficulty), 300)
-        const difficultyInterval = setInterval(() => setDifficulty(prev => prev + 1), 10000)
+        const difficultyInterval = setInterval(() => setDifficulty(prev => prev + 1), 1000)
 
-        Matter.Events.on(engine, 'beforeUpdate', () => {
-            moveObstacles()
-
-            if (player.position.y >= baseHeight - 20) {
-                Matter.Body.setPosition(player, {
-                    x: player.position.x,
-                    y: baseHeight - 20,
-                })
-                Matter.Body.setVelocity(player, {x: 0, y: 0})
-            }
-        })
-
-        Matter.Events.on(engine, 'collisionStart', (e) => {
+        Matter.Events.on(engine, 'beforeUpdate', () =>  moveObstacles())
+        Matter.Events.on(engine, 'collisionStart', e => {
             if (gameOver) return
             for (const pair of e.pairs) {
                 const labels = [pair.bodyA.label, pair.bodyB.label]
@@ -123,18 +120,10 @@ export default function InfiniteRunner() {
                     clearInterval(scoreInterval)
                     clearInterval(difficultyInterval)
                 }
-            }
-        })
 
-        const jump = () => {
-            if (gameOver) return
-            if (player.position.y >= baseHeight - 100) {
-                Matter.Body.setVelocity(player, {x: 0, y: -25})
+                if (labels.includes('player') && labels.includes('ground'))
+                    jumpCountRef.current = 0
             }
-        }
-
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') jump()
         })
 
         return () => {
@@ -145,10 +134,7 @@ export default function InfiniteRunner() {
             clearTimeout(spawnTimeoutId)
             clearInterval(scoreInterval)
             clearInterval(difficultyInterval)
-            if (render.canvas.parentNode) {
-                render.canvas.parentNode.removeChild(render.canvas)
-            }
-            window.removeEventListener('keydown', jump)
+            if (render.canvas.parentNode) render.canvas.parentNode.removeChild(render.canvas)
         }
     }, [retryKey])
 
@@ -161,17 +147,20 @@ export default function InfiniteRunner() {
                 onTouchStart={() => !gameOver && handleJump()}
             />
             <div className="text-lg font-medium text-white">점수: {score}</div>
-
-            {gameOver && (
-                <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background/90 p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3">
-                    <div className="text-xl font-bold text-destructive">💥 Game Over!</div>
-                    <Button variant="outline" onClick={handleRetry} className="gap-2">
-                        <RotateCw className="w-4 h-4"/>
-                        Retry
-                    </Button>
-                </div>
-            )}
+            {gameOver &&
+                <Card
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4">
+                    <CardTitle className="text-xl font-bold text-destructive text-center">
+                        💥 Game Over!
+                    </CardTitle>
+                    <CardContent className="p-0">
+                        <Button variant="outline" onClick={handleRetry} className="gap-2">
+                            <RotateCw className="w-4 h-4"/>
+                            Retry
+                        </Button>
+                    </CardContent>
+                </Card>
+            }
         </div>
     )
 }

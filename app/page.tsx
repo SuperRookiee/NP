@@ -10,7 +10,7 @@ export default function Home() {
         {href: '/summarize', label: '🧠 OpenAI 요약 도우미', className: 'bg-indigo-300 cursor-not-allowed opacity-50', enabled: false},
         {href: '/ip', label: '🌐 내 IP 확인하기', className: 'bg-slate-600 hover:bg-slate-700', enabled: true},
         {href: '/chart', label: '📊 나의 차트 보기', className: 'bg-purple-600 hover:bg-purple-700', enabled: true},
-        {href: '/run', label: '🎮 Game - Endless Runner', className: 'bg-orange-600 hover:bg-orange-700', enabled: true}
+        {href: '/runner', label: '🎮 Game - Endless Runner', className: 'bg-orange-600 hover:bg-orange-700', enabled: true}
     ]
 
     return (
