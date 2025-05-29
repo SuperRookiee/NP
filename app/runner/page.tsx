@@ -15,6 +15,7 @@ export default function InfiniteRunner() {
     const [retryKey, setRetryKey] = useState(0)
     const [difficulty, setDifficulty] = useState(1)
     const [isMobile, setIsMobile] = useState(false)
+    const [ranking, setRanking] = useState<{ name: string, score: number }[]>([])
 
     const handleRetry = () => {
         setScore(0)
@@ -22,6 +23,9 @@ export default function InfiniteRunner() {
         setRetryKey(prev => prev + 1)
         setDifficulty(1)
         jumpCountRef.current = 0
+        const engine = engineRef.current
+        const player = engine?.world.bodies.find(b => b.label === 'player')
+        if (player) player.render.fillStyle = '#86efac'
     }
 
     const handleJump = useCallback(() => {
@@ -31,6 +35,9 @@ export default function InfiniteRunner() {
         if (jumpCountRef.current < 2) {
             Matter.Body.setVelocity(player, {x: 0, y: -25})
             jumpCountRef.current++
+            const remaining = 2 - jumpCountRef.current
+            const color = remaining === 2 ? '#86efac' : remaining === 1 ? '#facc15' : '#f97316'
+            player.render.fillStyle = color
         }
     }, [gameOver])
 
@@ -46,6 +53,13 @@ export default function InfiniteRunner() {
     useEffect(() => {
         if (window.innerWidth <= 500) setIsMobile(true)
     }, [])
+
+    useEffect(() => {
+        fetch('/api/runner')
+            .then(res => res.json())
+            .then(data => setRanking(data))
+            .catch(err => console.error('Failed to load ranking', err))
+    }, [retryKey])
 
     useEffect(() => {
         const baseWidth = 1000
@@ -80,7 +94,7 @@ export default function InfiniteRunner() {
 
         const player = Matter.Bodies.rectangle(100, baseHeight - 80, 40, 40, {
             label: 'player',
-            render: {fillStyle: '#0ea5e9'},
+            render: {fillStyle: '#86efac'},
         })
 
         Matter.World.add(world, [ground, player])
@@ -134,6 +148,14 @@ export default function InfiniteRunner() {
             for (const pair of e.pairs) {
                 const labels = [pair.bodyA.label, pair.bodyB.label]
                 if (labels.includes('player') && labels.includes('obstacle')) {
+                    if (!gameOver) {
+                        const name = prompt('닉네임을 입력하세요') ?? '익명'
+                        fetch('/api/runner', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({name, score})
+                        })
+                    }
                     setGameOver(true)
                     Matter.Runner.stop(runner)
                     clearTimeout(spawnTimeoutId)
@@ -142,6 +164,9 @@ export default function InfiniteRunner() {
                 }
                 if (labels.includes('player') && labels.includes('ground')) {
                     jumpCountRef.current = 0
+                    const engine = engineRef.current
+                    const player = engine?.world.bodies.find(b => b.label === 'player')
+                    if (player) player.render.fillStyle = '#86efac'
                 }
             }
         })
@@ -164,8 +189,16 @@ export default function InfiniteRunner() {
                 ref={sceneRef}
                 className="relative w-full max-w-[62.5rem] aspect-[5/3] border-2 border-slate-600 bg-slate-800 shadow-2xl rounded-2xl overflow-hidden"
                 onClick={() => !gameOver && handleJump()}
-                onTouchStartCapture={() => !gameOver && handleJump()}
             />
+            <div className="text-lg font-semibold text-white tracking-widest">점수: {score}</div>
+            <div className="w-full max-w-[62.5rem] px-4">
+                <h2 className="text-white font-bold text-lg mb-2 mt-4">🏆 랭킹</h2>
+                <ul className="text-sm text-slate-200 space-y-1">
+                    {ranking.map((r, i) =>
+                        <li key={i}>{i + 1}. {r.name} - {r.score}점</li>
+                    )}
+                </ul>
+            </div>
             {isMobile && !gameOver &&
                 <Button
                     onClick={handleJump}
@@ -174,7 +207,6 @@ export default function InfiniteRunner() {
                     점프!
                 </Button>
             }
-            <div className="text-lg font-semibold text-white tracking-widest">점수: {score}</div>
             {gameOver &&
                 <Card
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-8 bg-background/90 rounded-3xl shadow-2xl border border-slate-700 backdrop-blur-md flex flex-col items-center gap-5 w-64">
