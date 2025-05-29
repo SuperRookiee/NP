@@ -14,6 +14,7 @@ export default function InfiniteRunner() {
     const [gameOver, setGameOver] = useState(false)
     const [retryKey, setRetryKey] = useState(0)
     const [difficulty, setDifficulty] = useState(1)
+    const [isMobile, setIsMobile] = useState(false)
 
     const handleRetry = () => {
         setScore(0)
@@ -41,6 +42,10 @@ export default function InfiniteRunner() {
         window.addEventListener('keydown', handleKeyDown)
         return () => window.removeEventListener('keydown', handleKeyDown)
     }, [handleKeyDown])
+
+    useEffect(() => {
+        if (window.innerWidth <= 500) setIsMobile(true)
+    }, [])
 
     useEffect(() => {
         const baseWidth = 1000
@@ -111,7 +116,18 @@ export default function InfiniteRunner() {
         const scoreInterval = setInterval(() => setScore(prev => prev + difficulty), 300)
         const difficultyInterval = setInterval(() => setDifficulty(prev => prev + 1), 10000)
 
-        Matter.Events.on(engine, 'beforeUpdate', () => moveObstacles())
+        Matter.Events.on(engine, 'beforeUpdate', () => {
+            moveObstacles()
+
+            const player = engine.world.bodies.find(b => b.label === 'player')
+            if (player && player.position.y > baseHeight - 20) {
+                Matter.Body.setPosition(player, {
+                    x: player.position.x,
+                    y: baseHeight - 20
+                })
+                Matter.Body.setVelocity(player, {x: 0, y: 0})
+            }
+        })
 
         Matter.Events.on(engine, 'collisionStart', e => {
             if (gameOver) return
@@ -148,13 +164,21 @@ export default function InfiniteRunner() {
                 ref={sceneRef}
                 className="relative w-full max-w-[62.5rem] aspect-[5/3] border-2 border-slate-600 bg-slate-800 shadow-2xl rounded-2xl overflow-hidden"
                 onClick={() => !gameOver && handleJump()}
-                onTouchStart={() => !gameOver && handleJump()}
+                onTouchStartCapture={() => !gameOver && handleJump()}
             />
+            {isMobile && !gameOver &&
+                <Button
+                    onClick={handleJump}
+                    className="fixed bottom-4 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg bg-sky-500 text-white z-50 active:scale-95 focus:outline-none focus:ring-2 focus:ring-sky-300 transition-transform"
+                >
+                    점프!
+                </Button>
+            }
             <div className="text-lg font-semibold text-white tracking-widest">점수: {score}</div>
-            {gameOver && (
+            {gameOver &&
                 <Card
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-8 bg-background/90 rounded-3xl shadow-2xl border border-slate-700 backdrop-blur-md flex flex-col items-center gap-5">
-                    <CardTitle className="text-2xl font-bold text-destructive text-center">
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-8 bg-background/90 rounded-3xl shadow-2xl border border-slate-700 backdrop-blur-md flex flex-col items-center gap-5 w-64">
+                    <CardTitle className="text-2xl font-bold text-destructive text-center whitespace-nowrap">
                         💥 Game Over!
                     </CardTitle>
                     <CardContent className="p-0">
@@ -164,7 +188,7 @@ export default function InfiniteRunner() {
                         </Button>
                     </CardContent>
                 </Card>
-            )}
+            }
         </div>
     )
 }
