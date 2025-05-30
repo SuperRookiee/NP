@@ -4,6 +4,7 @@ import {Cell, Difficulty} from '../types/mine/mineType';
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
 import {RotateCw, Timer} from "lucide-react";
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from "@/components/ui/dialog"; // ✅ Dialog import
 
 const DIFFICULTY_SETTING: Record<Difficulty, { rows: number, cols: number, mines: number }> = {
     Easy: {rows: 9, cols: 9, mines: 10},
@@ -61,25 +62,32 @@ export default function MinePage() {
     const [difficulty, setDifficulty] = useState<Difficulty>('Easy')
     const [board, setBoard] = useState(() => createBoard('Easy'))
     const [gameOver, setGameOver] = useState(false)
-    const [startTime, setStartTime] = useState<number | null>(null) //시작시간
-    const [elapsed, setElapsed] = useState<number>(0)               // 경과 시간
+    const [startTime, setStartTime] = useState<number | null>(null)
+    const [elapsed, setElapsed] = useState<number>(0)
+    const [clear, setClear] = useState(false)
 
     const timerRef = useRef<NodeJS.Timeout | null>(null)
+    const {rows, cols, mines} = DIFFICULTY_SETTING[difficulty]
 
-    const {rows, cols} = DIFFICULTY_SETTING[difficulty]
-
-    // 타이머 관리
     useEffect(() => {
         if (startTime && !gameOver) {
             timerRef.current = setInterval(() => {
                 setElapsed(Math.floor((Date.now() - startTime) / 1000))
             }, 1000)
         }
-
         return () => {
             if (timerRef.current) clearInterval(timerRef.current)
         }
     }, [startTime, gameOver])
+
+    useEffect(() => {
+        const opened = board.flat().filter(cell => cell.isOpen).length
+        const total = rows * cols
+        if (!gameOver && opened + mines === total) {
+            setGameOver(true)
+            setTimeout(() => setClear(true), 100)
+        }
+    }, [board, gameOver, rows, cols, mines])
 
     const openCellRecursive = (board: Cell[][], r: number, c: number) => {
         const inBounds = (r: number, c: number) => r >= 0 && r < rows && c >= 0 && c < cols
@@ -109,12 +117,10 @@ export default function MinePage() {
 
     const handleLeftClick = (r: number, c: number) => {
         if (gameOver) return
-
         if (!startTime) setStartTime(Date.now())
 
         const next = board.map(row => row.map(cell => ({...cell})))
         const cell = next[r][c]
-
         if (cell.isOpen || cell.isFlagged) return
 
         if (cell.isMine) {
@@ -155,42 +161,63 @@ export default function MinePage() {
         setGameOver(false)
         setStartTime(null)
         setElapsed(0)
+        setClear(false)
         if (timerRef.current) clearInterval(timerRef.current)
     }
 
     return (
-        <Card>
-            <CardHeader className="flex items-center justify-between">
-                <span className={`text-gray-500 dark:text-gray-400 flex items-center gap-0.5 ${gameOver && 'text-red-500'}`}><Timer/>{elapsed}s</span>
-                {gameOver && <CardDescription className="text-red-500 font-bold">☠️ Game Over</CardDescription>}
-            </CardHeader>
-            <CardTitle className="flex flex-wrap justify-center gap-2 mb-4 text-center">
-                <Button variant="outline" onClick={() => resetGame()}><RotateCw className="w-5 h-5"/> 재시작</Button>
-                {(['Easy', 'Normal', 'Hard'] as Difficulty[]).map(d => (
-                    <Button
-                        key={d}
-                        variant={difficulty === d ? 'default' : 'secondary'}
-                        onClick={() => resetGame(d)}
-                    >
-                        {d}
-                    </Button>
-                ))}
-            </CardTitle>
-            <CardContent className="grid gap-1 overflow-auto mx-auto justify-center" style={{gridTemplateColumns: `repeat(${cols}, 2rem)`}}>
-                {board.map((row, rowIndex) =>
-                    row.map((cell, colIndex) =>
+        <>
+            <Card>
+                <CardHeader className="flex items-center justify-between">
+                    <span
+                        className={`text-gray-500 dark:text-gray-400 flex items-center gap-0.5 ${gameOver && 'text-red-500'}`}>
+                        <Timer/>{elapsed}s
+                    </span>
+                    {gameOver && !clear && <CardDescription className="text-red-500 font-bold">☠️ Game Over</CardDescription>}
+                </CardHeader>
+                <CardTitle className="flex flex-wrap justify-center gap-2 mb-4 text-center">
+                    <Button variant="outline" onClick={() => resetGame()}><RotateCw className="w-5 h-5"/> 재시작</Button>
+                    {(['Easy', 'Normal', 'Hard'] as Difficulty[]).map((d: Difficulty) => (
                         <Button
-                            key={`${rowIndex}_${colIndex}`}
-                            variant={cell.isOpen ? 'secondary' : 'default'}
-                            className="p-0 h-8 w-8 text-xs"
-                            onClick={() => handleLeftClick(rowIndex, colIndex)}
-                            onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
+                            key={d}
+                            variant={difficulty === d ? 'default' : 'secondary'}
+                            onClick={() => resetGame(d)}
                         >
-                            {cell.isOpen ? cell.isMine ? '💣' : cell.neighborMines || '' : cell.isFlagged ? '🚩' : ''}
+                            {d}
                         </Button>
-                    ))
-                }
-            </CardContent>
-        </Card>
+                    ))}
+                </CardTitle>
+                <CardContent
+                    className="grid gap-[4px] sm:gap-1 overflow-auto mx-auto justify-center"
+                    style={{gridTemplateColumns: `repeat(${cols}, minmax(1.5rem, 2rem))`}}
+                >
+                    {board.map((row: Cell[], rowIndex: number) =>
+                        row.map((cell: Cell, colIndex: number) =>
+                            <Button
+                                key={`${rowIndex}_${colIndex}`}
+                                variant={cell.isOpen ? 'secondary' : 'default'}
+                                className="p-0 h-6 w-6 sm:h-8 sm:w-8 text-[10px] sm:text-xs"
+                                onClick={() => handleLeftClick(rowIndex, colIndex)}
+                                onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
+                            >
+                                {cell.isOpen ? cell.isMine ? '💣' : cell.neighborMines || '' : cell.isFlagged ? '🚩' : ''}
+                            </Button>
+                        ))}
+                </CardContent>
+            </Card>
+            <Dialog open={clear} onOpenChange={(open: boolean) => !open && resetGame()}>
+                <DialogContent className="text-center">
+                    <DialogHeader>
+                        <DialogTitle>🎉 Clear!</DialogTitle>
+                        <DialogDescription>
+                            축하합니다! 모든 지뢰를 피했습니다.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Button className="mx-auto mt-4" onClick={() => setClear(false)}>
+                        확인하고 다시 시작
+                    </Button>
+                </DialogContent>
+            </Dialog>
+        </>
     )
 }
