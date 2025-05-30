@@ -9,7 +9,8 @@ import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} fro
 const DIFFICULTY_SETTING: Record<Difficulty, { rows: number, cols: number, mines: number }> = {
     Easy: {rows: 9, cols: 9, mines: 10},
     Normal: {rows: 16, cols: 16, mines: 40},
-    Hard: {rows: 16, cols: 30, mines: 99}
+    Hard: {rows: 16, cols: 30, mines: 99},
+    Crazy: {rows: 1, cols: 2, mines: 1}
 }
 
 const createBoard = (difficulty: Difficulty): Cell[][] => {
@@ -84,7 +85,6 @@ export default function MinePage() {
         const opened = board.flat().filter(cell => cell.isOpen).length
         const total = rows * cols
         if (!gameOver && opened + mines === total) {
-            setGameOver(true)
             setTimeout(() => setClear(true), 100)
         }
     }, [board, gameOver, rows, cols, mines])
@@ -190,7 +190,7 @@ export default function MinePage() {
                 </CardHeader>
                 <CardTitle className="flex flex-wrap justify-center gap-2 mb-4 text-center">
                     <Button variant="outline" onClick={() => resetGame()}><RotateCw className="w-5 h-5"/> 재시작</Button>
-                    {(['Easy', 'Normal', 'Hard'] as Difficulty[]).map((d: Difficulty) =>
+                    {(['Easy', 'Normal', 'Hard', 'Crazy'] as Difficulty[]).map((d: Difficulty) =>
                         <Button
                             key={d}
                             variant={difficulty === d ? 'default' : 'secondary'}

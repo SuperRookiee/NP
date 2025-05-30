@@ -5,4 +5,4 @@ export type Cell = {
     neighborMines: number
 }
 
-export type Difficulty = 'Easy' | 'Normal' | 'Hard'
+export type Difficulty = 'Easy' | 'Normal' | 'Hard' | 'Crazy'
