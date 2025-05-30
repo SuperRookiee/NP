@@ -188,15 +188,15 @@ export default function MinePage() {
                     )}
                 </CardTitle>
                 <CardContent
-                    className="grid gap-[4px] sm:gap-1 overflow-auto mx-auto justify-center"
-                    style={{gridTemplateColumns: `repeat(${cols}, minmax(1.5rem, 2rem))`}}
+                    className="grid gap-1 overflow-auto mx-auto justify-center"
+                    style={{gridTemplateColumns: `repeat(${cols}, 2rem)`}}
                 >
                     {board.map((row: Cell[], rowIndex: number) =>
                         row.map((cell: Cell, colIndex: number) =>
                             <Button
                                 key={`${rowIndex}_${colIndex}`}
                                 variant={cell.isOpen ? 'secondary' : 'default'}
-                                className="p-0 h-6 w-6 sm:h-8 sm:w-8 text-[10px] sm:text-xs"
+                                className="p-0 w-8 h-8"
                                 onClick={() => handleLeftClick(rowIndex, colIndex)}
                                 onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
                             >
