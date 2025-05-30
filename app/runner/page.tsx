@@ -47,6 +47,7 @@ export default function InfiniteRunner() {
         setRetryKey(prev => prev + 1)
         setDifficulty(1)
         setStarted(false)
+        setPlayerName('')
         gameOverRef.current = false
         jumpCountRef.current = 0
         obstaclesRef.current = []
