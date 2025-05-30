@@ -14,6 +14,7 @@ export default function Header() {
         weather: '🌤️',
         summarize: '📄',
         runner: '🎮',
+        mine: '💣',
         default: '📁',
     }
 
