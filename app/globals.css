@@ -6,6 +6,11 @@ body {
     font-family: 'Inter', 'Noto Sans KR', sans-serif;
 }
 
+/* iOS long-press context menu 방지 */
+.no-callout {
+    -webkit-touch-callout: none;
+}
+
 @layer base {
     :root {
         --background: 0 0% 100%;

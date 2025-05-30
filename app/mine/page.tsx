@@ -65,8 +65,8 @@ export default function MinePage() {
     const [startTime, setStartTime] = useState<number | null>(null)
     const [elapsed, setElapsed] = useState<number>(0)
     const [clear, setClear] = useState(false)
-
     const timerRef = useRef<NodeJS.Timeout | null>(null)
+    const longPressTimeout = useRef<NodeJS.Timeout | null>(null)
     const {rows, cols, mines} = DIFFICULTY_SETTING[difficulty]
 
     useEffect(() => {
@@ -154,6 +154,19 @@ export default function MinePage() {
         setBoard(next)
     }
 
+    const handleTouchStart = (r: number, c: number) => {
+        longPressTimeout.current = setTimeout(() => {
+            handleRightClick({preventDefault: () => {}} as MouseEvent, r, c)
+        }, 300)
+    }
+
+    const handleTouchEnd = () => {
+        if (longPressTimeout.current) {
+            clearTimeout(longPressTimeout.current)
+            longPressTimeout.current = null
+        }
+    }
+
     const resetGame = (newDifficulty?: Difficulty) => {
         const diff = newDifficulty || difficulty
         setDifficulty(diff)
@@ -196,9 +209,11 @@ export default function MinePage() {
                             <Button
                                 key={`${rowIndex}_${colIndex}`}
                                 variant={cell.isOpen ? 'secondary' : 'default'}
-                                className="p-0 w-8 h-8"
+                                className="p-0 w-8 h-8 select-none no-callout"
                                 onClick={() => handleLeftClick(rowIndex, colIndex)}
                                 onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
+                                onTouchStart={() => handleTouchStart(rowIndex, colIndex)}
+                                onTouchEnd={handleTouchEnd}
                             >
                                 {cell.isOpen ? cell.isMine ? '💣' : cell.neighborMines || '' : cell.isFlagged ? '🚩' : ''}
                             </Button>
@@ -214,7 +229,7 @@ export default function MinePage() {
                         </DialogDescription>
                     </DialogHeader>
                     <Button className="mx-auto mt-4" onClick={() => setClear(false)}>
-                        확인하고 다시 시작
+                        Clear!
                     </Button>
                 </DialogContent>
             </Dialog>
