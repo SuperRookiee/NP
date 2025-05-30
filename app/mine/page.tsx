@@ -177,7 +177,7 @@ export default function MinePage() {
                 </CardHeader>
                 <CardTitle className="flex flex-wrap justify-center gap-2 mb-4 text-center">
                     <Button variant="outline" onClick={() => resetGame()}><RotateCw className="w-5 h-5"/> 재시작</Button>
-                    {(['Easy', 'Normal', 'Hard'] as Difficulty[]).map((d: Difficulty) => (
+                    {(['Easy', 'Normal', 'Hard'] as Difficulty[]).map((d: Difficulty) =>
                         <Button
                             key={d}
                             variant={difficulty === d ? 'default' : 'secondary'}
@@ -185,7 +185,7 @@ export default function MinePage() {
                         >
                             {d}
                         </Button>
-                    ))}
+                    )}
                 </CardTitle>
                 <CardContent
                     className="grid gap-[4px] sm:gap-1 overflow-auto mx-auto justify-center"
@@ -209,8 +209,8 @@ export default function MinePage() {
                 <DialogContent className="text-center">
                     <DialogHeader>
                         <DialogTitle>🎉 Clear!</DialogTitle>
-                        <DialogDescription>
-                            축하합니다! 모든 지뢰를 피했습니다.
+                        <DialogDescription className="flex items-center gap-1">
+                            <Timer/>{elapsed}s
                         </DialogDescription>
                     </DialogHeader>
                     <Button className="mx-auto mt-4" onClick={() => setClear(false)}>
