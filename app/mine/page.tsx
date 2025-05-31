@@ -1,10 +1,10 @@
 'use client'
 import {useEffect, useRef, useState, MouseEvent} from 'react'
-import {Cell, Difficulty} from '../types/mine/mineType';
+import {Cell, Difficulty} from '../types/mine/mineType'
 import {Button} from '@/components/ui/button'
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card";
-import {RotateCw, Timer} from "lucide-react";
-import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from "@/components/ui/dialog"; // ✅ Dialog import
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card'
+import {RotateCw, Timer} from 'lucide-react'
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription} from '@/components/ui/dialog'
 
 const DIFFICULTY_SETTING: Record<Difficulty, { rows: number, cols: number, mines: number }> = {
     Easy: {rows: 9, cols: 9, mines: 10},
@@ -63,6 +63,7 @@ export default function MinePage() {
     const [difficulty, setDifficulty] = useState<Difficulty>('Easy')
     const [board, setBoard] = useState(() => createBoard('Easy'))
     const [gameOver, setGameOver] = useState(false)
+    const [isDead, setIsDead] = useState(false)
     const [startTime, setStartTime] = useState<number | null>(null)
     const [elapsed, setElapsed] = useState<number>(0)
     const [clear, setClear] = useState(false)
@@ -85,6 +86,7 @@ export default function MinePage() {
         const opened = board.flat().filter(cell => cell.isOpen).length
         const total = rows * cols
         if (!gameOver && opened + mines === total) {
+            setGameOver(true)
             setTimeout(() => setClear(true), 100)
         }
     }, [board, gameOver, rows, cols, mines])
@@ -126,6 +128,7 @@ export default function MinePage() {
         if (cell.isMine) {
             cell.isOpen = true
             setGameOver(true)
+            setIsDead(true)
             for (const row of next) {
                 for (const cell of row) {
                     if (cell.isMine) cell.isOpen = true
@@ -156,7 +159,10 @@ export default function MinePage() {
 
     const handleTouchStart = (r: number, c: number) => {
         longPressTimeout.current = setTimeout(() => {
-            handleRightClick({preventDefault: () => {}} as MouseEvent, r, c)
+            handleRightClick({
+                preventDefault: () => {
+                }
+            } as MouseEvent, r, c)
         }, 300)
     }
 
@@ -172,6 +178,7 @@ export default function MinePage() {
         setDifficulty(diff)
         setBoard(createBoard(diff))
         setGameOver(false)
+        setIsDead(false)
         setStartTime(null)
         setElapsed(0)
         setClear(false)
@@ -182,15 +189,16 @@ export default function MinePage() {
         <>
             <Card>
                 <CardHeader className="flex items-center justify-between">
-                    <span
-                        className={`text-gray-500 dark:text-gray-400 flex items-center gap-0.5 ${gameOver && 'text-red-500'}`}>
-                        <Timer/>{elapsed}s
-                    </span>
-                    {gameOver && !clear && <CardDescription className="text-red-500 font-bold">☠️ Game Over</CardDescription>}
+                  <span className={`text-gray-500 dark:text-gray-400 flex items-center gap-0.5 ${gameOver && isDead && 'text-red-500'}`}>
+                    <Timer/> {elapsed}s
+                  </span>
+                    {gameOver && isDead && <CardDescription className="text-red-500 font-bold">☠️ Game Over</CardDescription>}
                 </CardHeader>
                 <CardTitle className="flex flex-wrap justify-center gap-2 mb-4 text-center">
-                    <Button variant="outline" onClick={() => resetGame()}><RotateCw className="w-5 h-5"/> 재시작</Button>
-                    {(['Easy', 'Normal', 'Hard', 'Crazy'] as Difficulty[]).map((d: Difficulty) =>
+                    <Button variant="outline" onClick={() => resetGame()}>
+                        <RotateCw className="w-5 h-5"/> 재시작
+                    </Button>
+                    {(['Easy', 'Normal', 'Hard', 'Crazy'] as Difficulty[]).map(d => (
                         <Button
                             key={d}
                             variant={difficulty === d ? 'default' : 'secondary'}
@@ -198,38 +206,43 @@ export default function MinePage() {
                         >
                             {d}
                         </Button>
-                    )}
+                    ))}
                 </CardTitle>
                 <CardContent
                     className="grid gap-1 overflow-auto mx-auto justify-center"
                     style={{gridTemplateColumns: `repeat(${cols}, 2rem)`}}
                 >
-                    {board.map((row: Cell[], rowIndex: number) =>
-                        row.map((cell: Cell, colIndex: number) =>
-                            <Button
-                                key={`${rowIndex}_${colIndex}`}
-                                variant={cell.isOpen ? 'secondary' : 'default'}
-                                className="p-0 w-8 h-8 select-none no-callout"
-                                onClick={() => handleLeftClick(rowIndex, colIndex)}
-                                onContextMenu={(e) => handleRightClick(e, rowIndex, colIndex)}
-                                onTouchStart={() => handleTouchStart(rowIndex, colIndex)}
-                                onTouchEnd={handleTouchEnd}
-                            >
-                                {cell.isOpen ? cell.isMine ? '💣' : cell.neighborMines || '' : cell.isFlagged ? '🚩' : ''}
-                            </Button>
-                        ))}
+                    {board.map((row, rowIndex) =>
+                            row.map((cell, colIndex) => (
+                                <Button
+                                    key={`${rowIndex}_${colIndex}`}
+                                    variant={cell.isOpen ? 'secondary' : 'default'}
+                                    className="p-0 w-8 h-8 select-none no-callout"
+                                    onClick={() => handleLeftClick(rowIndex, colIndex)}
+                                    onContextMenu={e => handleRightClick(e, rowIndex, colIndex)}
+                                    onTouchStart={() => handleTouchStart(rowIndex, colIndex)}
+                                    onTouchEnd={handleTouchEnd}
+                                >
+                <span className="select-none">
+                  {cell.isOpen ? (cell.isMine ? '💣' : cell.neighborMines || '') : cell.isFlagged ? '🚩' : ''}
+                </span>
+                                </Button>
+                            ))
+                    )}
                 </CardContent>
             </Card>
-            <Dialog open={clear} onOpenChange={(open: boolean) => !open && resetGame()}>
+
+            <Dialog open={clear} onOpenChange={open => !open && setClear(false)}>
                 <DialogContent className="text-center">
                     <DialogHeader>
                         <DialogTitle>🎉 Clear!</DialogTitle>
                         <DialogDescription className="flex items-center gap-1">
-                            <Timer/>{elapsed}s
+                            <Timer/>
+                            {elapsed}s
                         </DialogDescription>
                     </DialogHeader>
                     <Button className="mx-auto mt-4" onClick={() => setClear(false)}>
-                        Clear!
+                        확인하고 계속
                     </Button>
                 </DialogContent>
             </Dialog>
