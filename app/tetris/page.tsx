@@ -139,9 +139,11 @@ const TetrisPage = () => {
       dropRef.current = setTimeout(dropBlock, DROP_INTERVAL)
 
       return () => {
-         if (dropRef.current) clearTimeout(dropRef.current)
+        if (dropRef.current) {
+          clearTimeout(dropRef.current)
+        }
       }
-    }, [currentBlock, position, isRunning])
+    }, [currentBlock, position, isRunning]) // 필요 시 dropBlock도 포함
     
     const startGame = () => {
         setBoard(Array.from({length: ROWS}, () => Array(COLS).fill(0)))
