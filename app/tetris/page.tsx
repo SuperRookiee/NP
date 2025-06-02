@@ -216,7 +216,7 @@ const TetrisPage = () => {
                 </section>
 
                 {/* 모바일 방향키 */}
-                <div className="fixed bottom-[-10rem] right-[-8rem] z-1 md:hidden pointer-events-none">
+                <div className="fixed bottom-[-10rem] right-[-8rem] z-1 md:hidden">
                     <div className="pointer-events-auto grid grid-cols-3 grid-rows-3 gap-1">
                         <DirectionKeys onDirection={moveBlock} size={8}>
                             <Button onClick={rotateBlock} size="icon" className="w-8 h-8">
