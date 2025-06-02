@@ -15,6 +15,7 @@ export default function Header() {
         summarize: '📄',
         runner: '🎮',
         mine: '💣',
+        maze: '🌀',
         default: '📁',
     }
 

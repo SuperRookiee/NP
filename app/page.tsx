@@ -12,7 +12,8 @@ export default function Home() {
         {href: '/ip', label: '🌐 내 IP 확인하기', className: 'bg-slate-600 hover:bg-slate-700', enabled: true},
         {href: '/chart', label: '📊 나의 차트 보기', className: 'bg-purple-600 hover:bg-purple-700', enabled: true},
         {href: '/runner', label: '🎮 Game - Endless Runner', className: 'bg-orange-600 hover:bg-orange-700', enabled: true},
-        {href: '/mine', label: '🎮 Game - Minesweeper', className: 'bg-yellow-600 hover:bg-yellow-700', enabled: true}
+        {href: '/mine', label: '🎮 Game - Minesweeper', className: 'bg-yellow-600 hover:bg-yellow-700', enabled: true},
+        {href: '/maze', label: '🎮 Game - Maze', className: 'bg-rose-600 hover:bg-rose-700', enabled: true},
     ]
 
     return (
