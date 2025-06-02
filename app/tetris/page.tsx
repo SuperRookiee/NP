@@ -1,12 +1,8 @@
 'use client'
-
 import {useEffect, useRef, useState} from 'react'
 import {Card, CardContent, CardFooter, CardHeader, CardTitle} from '@/components/ui/card'
 import {Button} from '@/components/ui/button'
-import {
-    AlertDialog, AlertDialogContent, AlertDialogFooter,
-    AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogDescription
-} from '@/components/ui/alert-dialog'
+import {AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogAction, AlertDialogDescription} from '@/components/ui/alert-dialog'
 import {cn} from '@/lib/utils'
 import DirectionKeys from '@/components/DirectionKeys'
 import {Block} from '@/app/types/tetris/BlockType'
@@ -220,11 +216,11 @@ const TetrisPage = () => {
                 </section>
 
                 {/* 모바일 방향키 */}
-                <div className="fixed bottom-[-10rem] right-[-8rem] z-50 sm:hidden pointer-events-none">
+                <div className="fixed bottom-[-10rem] right-[-8rem] z-1 md:hidden pointer-events-none">
                     <div className="pointer-events-auto grid grid-cols-3 grid-rows-3 gap-1">
                         <DirectionKeys onDirection={moveBlock} size={8}>
                             <Button onClick={rotateBlock} size="icon" className="w-8 h-8">
-                                <RotateCw className="w-4 h-4" />
+                                <RotateCw className="w-4 h-4"/>
                             </Button>
                         </DirectionKeys>
                     </div>
