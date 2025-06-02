@@ -133,12 +133,16 @@ const TetrisPage = () => {
     }
 
     useEffect(() => {
-        if (!isRunning || !currentBlock) return
-        if (dropRef.current) clearTimeout(dropRef.current)
-        dropRef.current = setTimeout(dropBlock, DROP_INTERVAL)
-        return () => dropRef.current && clearTimeout(dropRef.current)
-    }, [currentBlock, position, isRunning])
+      if (!isRunning || !currentBlock) return
 
+      if (dropRef.current) clearTimeout(dropRef.current)
+      dropRef.current = setTimeout(dropBlock, DROP_INTERVAL)
+
+      return () => {
+         if (dropRef.current) clearTimeout(dropRef.current)
+      }
+    }, [currentBlock, position, isRunning])
+    
     const startGame = () => {
         setBoard(Array.from({length: ROWS}, () => Array(COLS).fill(0)))
         setScore(0)
