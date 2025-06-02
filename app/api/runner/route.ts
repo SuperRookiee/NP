@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({error: 'Invalid payload'}, {status: 400})
     }
 
-    const {error} = await supabase.from('scores').insert({name, score})
+    const {error} = await supabase.from('runner_score').insert({name, score})
     if (error) {
         return NextResponse.json({error: error.message}, {status: 500})
     }
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET() {
     const {data, error} = await supabase
-        .from('scores')
+        .from('runner_score')
         .select('name, score')
         .order('score', {ascending: false})
         .limit(10)
