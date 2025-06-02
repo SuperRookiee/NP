@@ -144,7 +144,7 @@ const TetrisPage = () => {
         }
       }
     }, [currentBlock, position, isRunning]) // 필요 시 dropBlock도 포함
-    
+
     const startGame = () => {
         setBoard(Array.from({length: ROWS}, () => Array(COLS).fill(0)))
         setScore(0)
@@ -157,9 +157,18 @@ const TetrisPage = () => {
     }
 
     useEffect(() => {
-        setNextBlock(randomTetromino())
-        return () => dropRef.current && clearTimeout(dropRef.current)
-    }, [])
+        if (!isRunning || !currentBlock) return
+
+        if (dropRef.current) clearTimeout(dropRef.current)
+        dropRef.current = setTimeout(dropBlock, DROP_INTERVAL)
+
+        return () => {
+            if (dropRef.current) {
+                clearTimeout(dropRef.current)
+            }
+        }
+    }, [currentBlock, position, isRunning])
+
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
