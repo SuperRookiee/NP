@@ -135,9 +135,7 @@ const MazePage = () => {
                     )}
                 </CardContent>
                 <CardFooter className="flex flex-col justify-center items-center pl-4">
-                    <div className="grid grid-cols-3 grid-rows-3 gap-2">
-                        <DirectionKeys onDirection={movePlayer}/>
-                    </div>
+                    <DirectionKeys onDirection={movePlayer}/>
                 </CardFooter>
             </Card>
             <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
