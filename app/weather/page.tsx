@@ -1,7 +1,7 @@
 'use client'
 import {useEffect, useState} from 'react'
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card"
-import Spinner from '@/app/_components/Spinner'
+import Spinner from '@/components/Spinner'
 
 export default function WeatherPage() {
     const [weather, setWeather] = useState<null | {

@@ -2,7 +2,7 @@
 import Link from 'next/link'
 import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
-import Header from "@/app/_components/Header";
+import Header from "@/components/Header";
 
 export default function Home() {
     const navItems = [
@@ -14,6 +14,7 @@ export default function Home() {
         {href: '/runner', label: '🎮 Game - Endless Runner', className: 'bg-orange-600 hover:bg-orange-700', enabled: true},
         {href: '/mine', label: '🎮 Game - Minesweeper', className: 'bg-yellow-600 hover:bg-yellow-700', enabled: true},
         {href: '/maze', label: '🎮 Game - Maze', className: 'bg-rose-600 hover:bg-rose-700', enabled: true},
+        {href: '/tetris', label: '🎮 Game - Tetris', className: 'bg-pink-600 hover:bg-pink-700', enabled: true}
     ]
 
     return (

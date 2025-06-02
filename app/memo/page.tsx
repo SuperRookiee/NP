@@ -1,10 +1,10 @@
 'use client'
 import {FormEvent, useState, useTransition} from 'react'
-import {summarizeMemo} from '@/app/_actions/summarize'
+import {summarizeMemo} from '@/actions/summarize'
 import {Card, CardHeader, CardTitle, CardContent} from "@/components/ui/card"
 import {Textarea} from "@/components/ui/textarea"
 import {Button} from "@/components/ui/button"
-import Spinner from '@/app/_components/Spinner'
+import Spinner from '@/components/Spinner'
 
 export default function MemoPage() {
     const [text, setText] = useState('')

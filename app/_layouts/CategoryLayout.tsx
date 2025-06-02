@@ -1,7 +1,7 @@
 'use client'
 import Link from 'next/link'
 import {ReactNode} from "react";
-import Header from "@/app/_components/Header";
+import Header from "@/components/Header";
 import {ArrowLeft} from "lucide-react";
 
 export default function CategoryLayout({children}: { children: ReactNode }) {

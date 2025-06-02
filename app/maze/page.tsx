@@ -1,23 +1,15 @@
 'use client'
 import {useEffect, useState, useTransition} from 'react'
 import {cn} from '@/lib/utils'
-import {Button} from '@/components/ui/button'
 import {Card, CardContent, CardFooter} from '@/components/ui/card'
 import {Skeleton} from '@/components/ui/skeleton'
 import {AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogFooter, AlertDialogAction} from '@/components/ui/alert-dialog'
-import {ArrowUp, ArrowDown, ArrowLeft, ArrowRight} from 'lucide-react'
+import DirectionKeys, {directions} from "@/components/DirectionKeys";
 
 const MAZE_ROWS = 30
 const MAZE_COLS = 30
 const START = {x: 0, y: 0}
-const GOAL = {x: 28, y: 28} // 미로 안쪽의 확실한 도착지점
-
-const directions = [
-    {dx: -1, dy: 0, icon: <ArrowUp/>, className: 'col-start-2 row-start-1'},
-    {dx: 0, dy: -1, icon: <ArrowLeft/>, className: 'col-start-1 row-start-2'},
-    {dx: 0, dy: 1, icon: <ArrowRight/>, className: 'col-start-3 row-start-2'},
-    {dx: 1, dy: 0, icon: <ArrowDown/>, className: 'col-start-2 row-start-3'},
-]
+const GOAL = {x: 28, y: 28}
 
 const generateMaze = () => {
     const maze = Array.from({length: MAZE_ROWS}, () => Array(MAZE_COLS).fill(1))
@@ -41,7 +33,7 @@ const generateMaze = () => {
     return maze
 }
 
-export default function MazeGame() {
+const MazePage = () => {
     const [maze, setMaze] = useState<number[][]>([])
     const [player, setPlayer] = useState(START)
     const [isPending, startTransition] = useTransition()
@@ -59,13 +51,6 @@ export default function MazeGame() {
         ) {
             setPlayer({x: nx, y: ny})
         }
-    }
-
-    const handleKey = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowUp') movePlayer(-1, 0)
-        if (e.key === 'ArrowDown') movePlayer(1, 0)
-        if (e.key === 'ArrowLeft') movePlayer(0, -1)
-        if (e.key === 'ArrowRight') movePlayer(0, 1)
     }
 
     useEffect(() => {
@@ -151,15 +136,7 @@ export default function MazeGame() {
                 </CardContent>
                 <CardFooter className="flex flex-col justify-center items-center pl-4">
                     <div className="grid grid-cols-3 grid-rows-3 gap-2">
-                        {directions.map(({dx, dy, icon, className}, i) => (
-                            <Button
-                                key={i}
-                                onClick={() => movePlayer(dx, dy)}
-                                className={`${className} w-10 h-10`}
-                            >
-                                {icon}
-                            </Button>
-                        ))}
+                        <DirectionKeys onDirection={movePlayer}/>
                     </div>
                 </CardFooter>
             </Card>
@@ -183,5 +160,6 @@ export default function MazeGame() {
             </AlertDialog>
         </>
     )
-
 }
+
+export default MazePage
